@@ -47,7 +47,67 @@ public class UserDBContext extends DBContext<User> {
         }
         return null;
     }
+    
+    public User getByEmail(String email) {
+        String sql = "SELECT username, password, fullName, DOB, Gender, depid FROM [User] WHERE email = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, email);
+            ResultSet rs = ps.executeQuery();
 
+            if (rs.next()) {
+                return new User(
+                    rs.getString("username"),
+                    rs.getString("password"),
+                    rs.getString("fullName"),
+                    rs.getString("DOB"),
+                    rs.getInt("Gender"),
+                    rs.getString("depid"),
+                    new ArrayList<>()
+                );
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(UserDBContext.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return null;
+    }
+    
+    public void saveResetToken(String email, String token) {
+        String sql = "UPDATE [User] SET reset_token = ? WHERE email = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, token);
+            ps.setString(2, email);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            Logger.getLogger(UserDBContext.class.getName()).log(Level.SEVERE, null, e);
+        }
+    }
+    
+    public User getUserByToken(String token) {
+        String sql = "SELECT username FROM [User] WHERE reset_token = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, token);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return new User(rs.getString("username"), null, null, null, 0, null, null);
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(UserDBContext.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return null;
+    }
+    
+    public void updatePassword(String username, String newPassword) {
+        String sql = "UPDATE [User] SET password = ?, reset_token = NULL WHERE username = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, newPassword);  // 🛑 Cần hash mật khẩu trước khi lưu
+            ps.setString(2, username);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            Logger.getLogger(UserDBContext.class.getName()).log(Level.SEVERE, null, e);
+        }
+    }
+    
     @Override
     public ArrayList<User> list() {
         throw new UnsupportedOperationException("Not supported yet.");
