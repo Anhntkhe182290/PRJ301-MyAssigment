@@ -54,13 +54,13 @@ public class LoginServlet extends HttpServlet {
         User user = userDB.getUserByUsernameAndPassword(username, password);
 
         if (user != null) {
-            System.out.println("DEBUG: Lấy được User từ DB - Username: " + user.getUsername() + ", Role: " + user.getRole().getRname());
+            System.out.println("DEBUG: Đăng nhập thành công - " + user.getUsername() + " (" + user.getRole().getRname() + ")");
 
             HttpSession session = request.getSession();
             session.setAttribute("user", user);
             session.setMaxInactiveInterval(30 * 60);
 
-            switch (user.getRole().getRname().toLowerCase().trim()) {
+            switch (user.getRole().getRname().toLowerCase()) {
                 case "boss":
                     response.sendRedirect(request.getContextPath() + "/boss_dashboard.jsp");
                     return;
@@ -71,14 +71,11 @@ public class LoginServlet extends HttpServlet {
                     response.sendRedirect(request.getContextPath() + "/staff_dashboard.jsp");
                     return;
                 default:
-                    System.out.println("DEBUG: Role không hợp lệ -> Xóa session và về login.jsp");
                     session.invalidate();
                     request.setAttribute("errorMessage", "Tài khoản không có quyền hợp lệ!");
                     request.getRequestDispatcher("login.jsp").forward(request, response);
-                    return;
             }
         } else {
-            System.out.println("DEBUG: Không tìm thấy user trong database");
             request.setAttribute("errorMessage", "Tên đăng nhập hoặc mật khẩu không đúng!");
             request.getRequestDispatcher("login.jsp").forward(request, response);
         }
