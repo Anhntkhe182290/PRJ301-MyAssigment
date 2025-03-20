@@ -2,6 +2,7 @@ package dal;
 
 import data.Role;
 import data.User;
+import data.Department;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.logging.Level;
@@ -9,127 +10,125 @@ import java.util.logging.Logger;
 
 public class UserDBContext extends DBContext<User> {
 
-    public User get(String username, String password) {
-        try {
-            String sql = "SELECT u.username, u.password, u.fullName, u.DOB, u.Gender, u.depid, r.rid, r.rname " +
-                         "FROM [User] u " +
-                         "LEFT JOIN User_Role ur ON u.username = ur.username " +
-                         "LEFT JOIN [Role] r ON ur.rid = r.rid " +
-                         "WHERE u.username = ? AND u.password = ?";
-            PreparedStatement stm = connection.prepareStatement(sql);
-            stm.setString(1, username);
-            stm.setString(2, password);
-            ResultSet rs = stm.executeQuery();
+    private static final Logger LOGGER = Logger.getLogger(UserDBContext.class.getName());
 
-            User user = null;
-            ArrayList<Role> roles = new ArrayList<>();
-            
-            while (rs.next()) {
-                if (user == null) {
-                    user = new User(
-                        rs.getString("username"),
-                        rs.getString("password"),
-                        rs.getString("fullName"),
-                        rs.getString("DOB"),
-                        rs.getInt("Gender"),
-                        rs.getString("depid"),
-                        roles
-                    );
-                }
-
-                Role role = new Role(rs.getString("rid"), rs.getString("rname"));
-                roles.add(role);
-            }
-
-            return user;
-        } catch (SQLException ex) {
-            Logger.getLogger(UserDBContext.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return null;
-    }
-    
-    public User getByEmail(String email) {
-        String sql = "SELECT username, password, fullName, DOB, Gender, depid FROM [User] WHERE email = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setString(1, email);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                return new User(
-                    rs.getString("username"),
-                    rs.getString("password"),
-                    rs.getString("fullName"),
-                    rs.getString("DOB"),
-                    rs.getInt("Gender"),
-                    rs.getString("depid"),
-                    new ArrayList<>()
-                );
-            }
-        } catch (SQLException e) {
-            Logger.getLogger(UserDBContext.class.getName()).log(Level.SEVERE, null, e);
-        }
-        return null;
-    }
-    
-    public void saveResetToken(String email, String token) {
-        String sql = "UPDATE [User] SET reset_token = ? WHERE email = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setString(1, token);
-            ps.setString(2, email);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            Logger.getLogger(UserDBContext.class.getName()).log(Level.SEVERE, null, e);
-        }
-    }
-    
-    public User getUserByToken(String token) {
-        String sql = "SELECT username FROM [User] WHERE reset_token = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setString(1, token);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                return new User(rs.getString("username"), null, null, null, 0, null, null);
-            }
-        } catch (SQLException e) {
-            Logger.getLogger(UserDBContext.class.getName()).log(Level.SEVERE, null, e);
-        }
-        return null;
-    }
-    
-    public void updatePassword(String username, String newPassword) {
-        String sql = "UPDATE [User] SET password = ?, reset_token = NULL WHERE username = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setString(1, newPassword);  // 🛑 Cần hash mật khẩu trước khi lưu
-            ps.setString(2, username);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            Logger.getLogger(UserDBContext.class.getName()).log(Level.SEVERE, null, e);
-        }
-    }
-    
-    @Override
     public ArrayList<User> list() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        ArrayList<User> users = new ArrayList<>();
+        String sql = "SELECT u.username, u.password, u.fullname, u.dob, u.gender, u.depid, "
+                + "r.rid, role.rname AS role_name, d.depid, d.depname "
+                + "FROM [User] u "
+                + "INNER JOIN User_Role r ON u.username = r.username "
+                + "INNER JOIN Role role ON r.rid = role.rid "
+                + "INNER JOIN Department d ON u.depid = d.depid";
+
+        try (PreparedStatement stmt = this.connection.prepareStatement(sql); ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                User user = mapUser(rs);
+                users.add(user);
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Lỗi khi truy vấn danh sách User", ex);
+        }
+        return users;
     }
 
-    @Override
-    public User get(int id) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    /**
+     * Lấy User theo ID
+     */
+    public User getUserByUsernameAndPassword(String username, String password) {
+    String sql = "SELECT u.username, u.password, u.fullname, u.dob, u.gender, u.depid, "
+            + "r.rid, r.rname AS role_name, d.depid, d.depname "
+            + "FROM [User] u "
+            + "INNER JOIN User_Role ur ON u.username = ur.username "
+            + "INNER JOIN Role r ON ur.rid = r.rid "
+            + "INNER JOIN Department d ON u.depid = d.depid "
+            + "WHERE u.username = ? AND u.password = ?";
+
+    try (PreparedStatement stmt = this.connection.prepareStatement(sql)) {
+        stmt.setString(1, username);
+        stmt.setString(2, password);
+        ResultSet rs = stmt.executeQuery();
+
+        if (rs.next()) {
+            User user = mapUser(rs);
+            System.out.println("DEBUG: User lấy từ DB - " + user.getUsername() + " - Role: " + user.getRole().getRname());
+            return user;
+        }
+    } catch (SQLException ex) {
+        System.out.println("DEBUG: Lỗi truy vấn SQL trong UserDBContext");
+        ex.printStackTrace();
+    }
+    return null;
+}
+
+    /**
+     * Lấy User theo username & password (Dùng cho đăng nhập)
+     */
+    public User get(String username, String password) {
+        User user = null;
+        String sql = "SELECT u.username, u.password, u.fullname, u.dob, u.gender, u.depid, "
+                + "r.rid, role.rname AS role_name, d.depid, d.depname "
+                + "FROM [User] u "
+                + "INNER JOIN User_Role r ON u.username = r.username "
+                + "INNER JOIN Role role ON r.rid = role.rid "
+                + "INNER JOIN Department d ON u.depid = d.depid "
+                + "WHERE u.username = ? AND u.password = ?";
+
+        try (PreparedStatement stmt = this.connection.prepareStatement(sql)) {
+            stmt.setString(1, username);
+            stmt.setString(2, password);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    user = mapUser(rs);
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Lỗi khi lấy User theo username và password", ex);
+        }
+        return user;
     }
 
     @Override
     public void insert(User model) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
     @Override
     public void update(User model) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
     @Override
     public void delete(User model) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+    
+    private User mapUser(ResultSet rs) throws SQLException {
+    User user = new User();
+    user.setUsername(rs.getString("username"));
+    user.setPassword(rs.getString("password"));
+    user.setFullName(rs.getString("fullname"));
+    user.setDob(rs.getDate("dob"));
+    user.setGender(rs.getInt("gender"));
+
+    // Department
+    Department department = new Department();
+    department.setDepid(rs.getInt("depid"));
+    department.setDepName(rs.getString("depname"));
+    user.setDepartment(department);
+
+    // Role
+    Role role = new Role();
+    role.setRoleId(rs.getInt("rid"));
+    role.setRname(rs.getString("role_name"));
+    user.setRole(role);
+
+    return user;
+}
+
+    @Override
+    public User get(int id) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 }

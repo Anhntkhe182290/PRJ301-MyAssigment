@@ -1,41 +1,29 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package data;
 
-/**
- *
- * @author Admin
- */
 public class Department {
-    private String depid;
-    private String depname;
+    private int depid;
+    private String depName;
 
-    public Department() {
-    }
+    public Department() {}
 
-    public Department(String depid, String depname) {
+    public Department(int depid, String depName) {
         this.depid = depid;
-        this.depname = depname;
+        this.depName = depName;
     }
 
-    public String getDepid() {
+    public int getDepid() {
         return depid;
     }
 
-    public void setDepid(String depid) {
+    public void setDepid(int depid) {
         this.depid = depid;
     }
 
-    public String getDepname() {
-        return depname;
+    public String getDepName() {
+        return depName;
     }
 
-    public void setDepname(String depname) {
-        this.depname = depname;
+    public void setDepName(String depName) {
+        this.depName = depName;
     }
-    
-    
-    
 }

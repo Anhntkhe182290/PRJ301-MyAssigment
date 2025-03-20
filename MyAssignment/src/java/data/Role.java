@@ -1,27 +1,25 @@
 package data;
 
-import java.util.List;
-
 public class Role {
+    private int roleId;   // 🟢 ID vai trò (1 = Boss, 2 = Manager, 3 = Staff)
+    private String rname; // 🟢 Tên vai trò ("boss", "manager", "staff")
 
-    private String rid;
-    private String rname;
-    private List<Feature> features;
+    // 🟢 Constructor không tham số
+    public Role() {}
 
-    public Role() {
-    }
-
-    public Role(String rid, String rname) {
-        this.rid = rid;
+    // 🟢 Constructor có tham số
+    public Role(int roleId, String rname) {
+        this.roleId = roleId;
         this.rname = rname;
     }
 
-    public String getRid() {
-        return rid;
+    // 🟢 Getter & Setter
+    public int getRoleId() {
+        return roleId;
     }
 
-    public void setRid(String rid) {
-        this.rid = rid;
+    public void setRoleId(int roleId) {
+        this.roleId = roleId;
     }
 
     public String getRname() {
@@ -32,11 +30,12 @@ public class Role {
         this.rname = rname;
     }
 
-    public List<Feature> getFeatures() {
-        return features;
-    }
-
-    public void setFeatures(List<Feature> features) {
-        this.features = features;
+    // 🟢 Thêm phương thức toString() để debug nhanh
+    @Override
+    public String toString() {
+        return "Role{" +
+                "roleId=" + roleId +
+                ", rname='" + rname + '\'' +
+                '}';
     }
 }

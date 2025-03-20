@@ -1,36 +1,29 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package data;
 
-/**
- *
- * @author Admin
- */
-import java.util.List;
+import java.sql.Date;
 
 public class User {
-
     private String username;
     private String password;
     private String fullName;
-    private String dob;
-    private int gender; // 1: Male, 0: Female
-    private String depid;
-    private List<Role> roles; // Danh sách quyền
+    private Date dob;
+    private int gender;
+    private Department department; // 🟢 Thêm Department vào User
+    private Role role;
 
-    public User(String username, String password, String fullName, String dob, int gender, String depid, List<Role> roles) {
+    public User() {}
+
+    public User(String username, String password, String fullName, Date dob, int gender, Department department, Role role) {
         this.username = username;
         this.password = password;
         this.fullName = fullName;
         this.dob = dob;
         this.gender = gender;
-        this.depid = depid;
-        this.roles = roles;
+        this.department = department;
+        this.role = role;
     }
 
-    // Getters và Setters
+    // 🟢 Getter & Setter
     public String getUsername() {
         return username;
     }
@@ -55,11 +48,11 @@ public class User {
         this.fullName = fullName;
     }
 
-    public String getDob() {
+    public Date getDob() {
         return dob;
     }
 
-    public void setDob(String dob) {
+    public void setDob(Date dob) {
         this.dob = dob;
     }
 
@@ -71,23 +64,19 @@ public class User {
         this.gender = gender;
     }
 
-    public String getDepid() {
-        return depid;
+    public Department getDepartment() {
+        return department;
     }
 
-    public void setDepid(String depid) {
-        this.depid = depid;
+    public void setDepartment(Department department) {
+        this.department = department;
     }
 
-    public List<Role> getRoles() {
-        return roles;
+    public Role getRole() {
+        return role;
     }
 
-    public void setRoles(List<Role> roles) {
-        this.roles = roles;
-    }
-
-    public boolean hasRole(String roleName) {
-        return roles.stream().anyMatch(role -> role.getRname().equalsIgnoreCase(roleName));
+    public void setRole(Role role) {
+        this.role = role;
     }
 }

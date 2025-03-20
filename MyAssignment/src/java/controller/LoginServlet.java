@@ -1,11 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package controller;
 
-import dal.UserDBContext;
 import data.User;
+import dal.UserDBContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -17,43 +13,74 @@ import java.io.IOException;
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
 
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String username = request.getParameter("username");
-        String password = request.getParameter("password");
-        String captchaInput = request.getParameter("captcha");
-
-        HttpSession session = request.getSession();
-        String captchaValue = (String) session.getAttribute("captcha");
-
-        if (captchaValue == null || !captchaValue.equals(captchaInput)) {
-            request.setAttribute("errorMessage", "Captcha không chính xác!");
-            request.getRequestDispatcher("login.jsp").forward(request, response);
-            return;
-        }
-
-        UserDBContext userDB = new UserDBContext();
-        User user = userDB.get(username, password);
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        HttpSession session = request.getSession(false);
+        User user = (session != null) ? (User) session.getAttribute("user") : null;
 
         if (user != null) {
-            if (session != null) {
-                session.invalidate();
+            String role = user.getRole().getRname().toLowerCase().trim();
+            System.out.println("DEBUG: Người dùng đã đăng nhập - Role: " + role);
+
+            switch (role) {
+                case "boss":
+                    response.sendRedirect(request.getContextPath() + "/boss_dashboard.jsp");
+                    return;
+                case "manage":
+                    response.sendRedirect(request.getContextPath() + "/manage_dashboard.jsp");
+                    return;
+                case "staff":
+                    response.sendRedirect(request.getContextPath() + "/staff_dashboard.jsp"); // 🟢 Đã sửa đường dẫn
+                    return;
+                default:
+                    session.invalidate();
+                    request.setAttribute("errorMessage", "Tài khoản không có quyền hợp lệ!");
+                    request.getRequestDispatcher("login.jsp").forward(request, response);
+                    return;
             }
-
-            session = request.getSession(true);
-            session.setAttribute("user", user);
-            session.setMaxInactiveInterval(30 * 60); 
-
-            response.sendRedirect("dashboard.jsp");
-        } else {
-            request.setAttribute("errorMessage", "Tên đăng nhập hoặc mật khẩu không đúng!");
-            request.getRequestDispatcher("login.jsp").forward(request, response);
-            return;
         }
-    }
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.getRequestDispatcher("login.jsp").forward(request, response);
     }
 
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
+
+        UserDBContext userDB = new UserDBContext();
+        User user = userDB.getUserByUsernameAndPassword(username, password);
+
+        if (user != null) {
+            System.out.println("DEBUG: Lấy được User từ DB - Username: " + user.getUsername() + ", Role: " + user.getRole().getRname());
+
+            HttpSession session = request.getSession();
+            session.setAttribute("user", user);
+            session.setMaxInactiveInterval(30 * 60);
+
+            switch (user.getRole().getRname().toLowerCase().trim()) {
+                case "boss":
+                    response.sendRedirect(request.getContextPath() + "/boss_dashboard.jsp");
+                    return;
+                case "manage":
+                    response.sendRedirect(request.getContextPath() + "/manage_dashboard.jsp");
+                    return;
+                case "staff":
+                    response.sendRedirect(request.getContextPath() + "/staff_dashboard.jsp");
+                    return;
+                default:
+                    System.out.println("DEBUG: Role không hợp lệ -> Xóa session và về login.jsp");
+                    session.invalidate();
+                    request.setAttribute("errorMessage", "Tài khoản không có quyền hợp lệ!");
+                    request.getRequestDispatcher("login.jsp").forward(request, response);
+                    return;
+            }
+        } else {
+            System.out.println("DEBUG: Không tìm thấy user trong database");
+            request.setAttribute("errorMessage", "Tên đăng nhập hoặc mật khẩu không đúng!");
+            request.getRequestDispatcher("login.jsp").forward(request, response);
+        }
+    }
 }
