@@ -22,7 +22,7 @@ public class AbsentRequest {
         this.creationDate = creationDate;
     }
 
-    // ✅ Getter cho `absenceId`
+    //Getter cho `absenceId`
     public String getAbsenceId() {
         return absenceId;
     }

@@ -3,6 +3,10 @@
 <%@ page import="data.AbsentRequest" %>
 <%@ page import="java.util.List" %>
 
+<%
+    List<AbsentRequest> requests = (List<AbsentRequest>) request.getAttribute("requests");
+%>
+
 <!DOCTYPE html>
 <html>
     <head>
@@ -49,33 +53,26 @@
         </style>
     </head>
     <body>
-        <% 
-            // 🛑 Kiểm tra session user
+        <%
             User user = (User) session.getAttribute("user");
             if (user == null || user.getRole() == null || !user.getRole().getRname().equalsIgnoreCase("staff")) {
                 response.sendRedirect(request.getContextPath() + "/login.jsp");
                 return;
             }
-
-            // Lấy danh sách đơn xin nghỉ của nhân viên hiện tại
-            List<AbsentRequest> requests = (List<AbsentRequest>) request.getAttribute("requests");
         %>
 
         <h2>Welcome, <%= user.getFullName() %>!</h2>
 
-        <%-- 🟢 Hiển thị thông báo cập nhật thành công/thất bại --%>
-        <% if (session.getAttribute("successMessage") != null) { %>
-        <p class="message"><%= session.getAttribute("successMessage") %></p>
-        <% session.removeAttribute("successMessage"); %>
+        <% if (request.getAttribute("successMessage") != null) { %>
+        <p class="message"><%= request.getAttribute("successMessage") %></p>
         <% } %>
 
-        <% if (session.getAttribute("errorMessage") != null) { %>
-        <p class="error"><%= session.getAttribute("errorMessage") %></p>
-        <% session.removeAttribute("errorMessage"); %>
+        <% if (request.getAttribute("errorMessage") != null) { %>
+        <p class="error"><%= request.getAttribute("errorMessage") %></p>
         <% } %>
 
         <div class="container">
-            <!-- 🟢 Profile Section -->
+            <!-- Profile -->
             <div class="profile">
                 <h3>My Profile</h3>
                 <form action="staff_dashboard" method="post">
@@ -108,7 +105,7 @@
                 </form>
             </div>
 
-            <!-- 🟢 Request Form Section -->
+            <!-- Request Form -->
             <div class="request-form">
                 <h3>Đơn xin nghỉ phép</h3>
                 <form action="staff_dashboard" method="post">
@@ -142,27 +139,59 @@
                     <th>Từ ngày</th>
                     <th>Đến ngày</th>
                     <th>Trạng thái</th>
+                    <th>Ngày tạo</th>
+                    <th>Thao tác</th>
                 </tr>
-                <% if (requests != null && !requests.isEmpty()) { %>
-                <% for (AbsentRequest requestObj : requests) { %>
-                <tr>
-                    <td><%= requestObj.getAbsenceId() %></td>
-                    <td><%= requestObj.getTitle() %></td>
-                    <td><%= requestObj.getReason() %></td>
-                    <td><%= requestObj.getFromDate() %></td>
-                    <td><%= requestObj.getToDate() %></td>
-                    <td><%= requestObj.getStatus() == 1 ? "In Process" : (requestObj.getStatus() == 2 ? "Approved" : "Rejected") %></td>
-                    <td><%= requestObj.getCreationDate() %></td>
 
+                <% 
+                    if (requests != null && !requests.isEmpty()) {
+                        for (AbsentRequest req : requests) { 
+                %>
+                <tr>
+                    <td><%= req.getAbsenceId() %></td>
+                    <td><%= req.getTitle() %></td>
+                    <td><%= req.getReason() %></td>
+                    <td><%= req.getFromDate() %></td>
+                    <td><%= req.getToDate() %></td>
+                    <td>
+                        <%
+                            String statusText = "Unknown";
+                            switch (req.getStatus()) {
+                                case 1: statusText = "In Process"; break;
+                                case 2: statusText = "Approved"; break;
+                                case 3: statusText = "Rejected"; break;
+                            }
+                        %>
+                        <%= statusText %>
+                    </td>
+                    <td><%= req.getCreationDate() %></td>
+                    <td>
+                        <% if (req.getStatus() == 1) { %>
+                        <form action="edit_absent" method="get" style="display:inline;">
+                            <input type="hidden" name="absenceId" value="<%= req.getAbsenceId() %>"/>
+                            <button type="submit">Sửa</button>
+                        </form>
+
+                        <form action="staff_dashboard" method="post" style="display:inline;">
+                            <input type="hidden" name="action" value="delete"/>
+                            <input type="hidden" name="absenceId" value="<%= req.getAbsenceId() %>"/>
+                            <button type="submit" onclick="return confirm('Bạn có chắc muốn xoá đơn này?')">Xoá</button>
+                        </form>
+                        <% } else { %>
+                        Đã xử lý
+                        <% } %>
+                    </td>
                 </tr>
-                <% } %>
-                <% } else { %>
-                <tr><td colspan="6">Không có đơn xin nghỉ nào.</td></tr>
+                <%
+                        }
+                    } else {
+                %>
+                <tr><td colspan="8">Không có đơn xin nghỉ nào.</td></tr>
                 <% } %>
             </table>
         </div>
 
-        <!-- 🟢 Navigation Links -->
-        <a href="logout">Logout</a> 
-    </body>         
+
+        <a href="logout">Logout</a>
+    </body>
 </html>

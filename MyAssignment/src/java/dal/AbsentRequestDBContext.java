@@ -10,11 +10,10 @@ public class AbsentRequestDBContext extends DBContext<AbsentRequest> {
 
     private static final Logger LOGGER = Logger.getLogger(AbsentRequestDBContext.class.getName());
 
-    // ✅ Lấy danh sách đơn xin nghỉ của một nhân viên cụ thể
     public ArrayList<AbsentRequest> getAbsentRequestsByUser(String username) {
         ArrayList<AbsentRequest> requests = new ArrayList<>();
-        String sql = "SELECT absence_id, title, reason, from_date, to_date, status, created_by, creation_date "
-                   + "FROM AbsentRequest WHERE created_by = ?";
+        String sql = "SELECT abid, title, reason, [from], [to], status, createBy, createAt "
+                + "FROM AbsentRequest WHERE createBy = ?";
 
         try {
             PreparedStatement stmt = this.connection.prepareStatement(sql);
@@ -23,14 +22,14 @@ public class AbsentRequestDBContext extends DBContext<AbsentRequest> {
 
             while (rs.next()) {
                 AbsentRequest request = new AbsentRequest(
-                    rs.getString("absence_id"),
-                    rs.getString("title"),
-                    rs.getString("reason"),
-                    rs.getString("from_date"),
-                    rs.getString("to_date"),
-                    rs.getInt("status"),
-                    rs.getString("created_by"),
-                    rs.getString("creation_date")
+                        rs.getString("abid"),
+                        rs.getString("title"),
+                        rs.getString("reason"),
+                        rs.getString("from"),
+                        rs.getString("to"),
+                        rs.getInt("status"),
+                        rs.getString("createBy"),
+                        rs.getString("createAt")
                 );
                 requests.add(request);
             }
@@ -42,10 +41,9 @@ public class AbsentRequestDBContext extends DBContext<AbsentRequest> {
         return requests;
     }
 
-    // ✅ Thêm một đơn xin nghỉ mới
     public void insertAbsentRequest(AbsentRequest request) {
-        String sql = "INSERT INTO AbsentRequest (absence_id, title, reason, from_date, to_date, status, created_by, creation_date) "
-                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO AbsentRequest (abid, title, reason, [from], [to], status, createBy, createAt) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try {
             PreparedStatement stmt = this.connection.prepareStatement(sql);
@@ -65,9 +63,8 @@ public class AbsentRequestDBContext extends DBContext<AbsentRequest> {
         }
     }
 
-    // ✅ Cập nhật trạng thái đơn xin nghỉ (Manager/Boss duyệt đơn)
     public void updateAbsentRequestStatus(String absenceId, int status) {
-        String sql = "UPDATE AbsentRequest SET status = ? WHERE absence_id = ?";
+        String sql = "UPDATE AbsentRequest SET status = ? WHERE abid = ?";
 
         try {
             PreparedStatement stmt = this.connection.prepareStatement(sql);
@@ -82,7 +79,7 @@ public class AbsentRequestDBContext extends DBContext<AbsentRequest> {
 
     public ArrayList<AbsentRequest> list() {
         ArrayList<AbsentRequest> requests = new ArrayList<>();
-        String sql = "SELECT absence_id, title, reason, from_date, to_date, status, created_by, creation_date FROM AbsentRequest";
+        String sql = "SELECT abid, title, reason, [from], [to], status, createBy, createAt FROM AbsentRequest";
 
         try {
             PreparedStatement stmt = this.connection.prepareStatement(sql);
@@ -90,14 +87,14 @@ public class AbsentRequestDBContext extends DBContext<AbsentRequest> {
 
             while (rs.next()) {
                 AbsentRequest request = new AbsentRequest(
-                    rs.getString("absence_id"),
-                    rs.getString("title"),
-                    rs.getString("reason"),
-                    rs.getString("from_date"),
-                    rs.getString("to_date"),
-                    rs.getInt("status"),
-                    rs.getString("created_by"),
-                    rs.getString("creation_date")
+                        rs.getString("abid"),
+                        rs.getString("title"),
+                        rs.getString("reason"),
+                        rs.getString("from"),
+                        rs.getString("to"),
+                        rs.getInt("status"),
+                        rs.getString("createBy"),
+                        rs.getString("createAt")
                 );
                 requests.add(request);
             }
@@ -126,7 +123,7 @@ public class AbsentRequestDBContext extends DBContext<AbsentRequest> {
 
     @Override
     public void delete(AbsentRequest model) {
-        String sql = "DELETE FROM AbsentRequest WHERE absence_id = ?";
+        String sql = "DELETE FROM AbsentRequest WHERE abid = ?";
 
         try {
             PreparedStatement stmt = this.connection.prepareStatement(sql);
@@ -135,6 +132,57 @@ public class AbsentRequestDBContext extends DBContext<AbsentRequest> {
             stmt.close();
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Lỗi khi xóa đơn xin nghỉ", ex);
+        }
+    }
+
+    public void deleteById(String absenceId) {
+        String sql = "DELETE FROM AbsentRequest WHERE abid = ? AND status = 1";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, absenceId);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Lỗi khi xóa đơn xin nghỉ", e);
+        }
+    }
+
+    public AbsentRequest getRequestById(String absenceId) {
+        String sql = "SELECT * FROM AbsentRequest WHERE abid = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, absenceId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return new AbsentRequest(
+                        rs.getString("abid"),
+                        rs.getString("title"),
+                        rs.getString("reason"),
+                        rs.getString("from"),
+                        rs.getString("to"),
+                        rs.getInt("status"),
+                        rs.getString("createBy"),
+                        rs.getString("createAt")
+                );
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return null;
+    }
+
+    public AbsentRequest getAbsentRequestById(String absenceId) {
+        return getRequestById(absenceId);
+    }
+
+    public void updateAbsentRequestContent(AbsentRequest request) {
+        String sql = "UPDATE AbsentRequest SET title = ?, reason = ?, [from] = ?, [to] = ? WHERE abid = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, request.getTitle());
+            stmt.setString(2, request.getReason());
+            stmt.setString(3, request.getFromDate());
+            stmt.setString(4, request.getToDate());
+            stmt.setString(5, request.getAbsenceId());
+            stmt.executeUpdate();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
         }
     }
 }

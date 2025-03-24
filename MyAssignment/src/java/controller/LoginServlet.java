@@ -25,13 +25,13 @@ public class LoginServlet extends HttpServlet {
 
             switch (role) {
                 case "boss":
-                    response.sendRedirect(request.getContextPath() + "/boss_dashboard.jsp");
+                    response.sendRedirect(request.getContextPath() + "/boss_dashboard");
                     return;
                 case "manage":
-                    response.sendRedirect(request.getContextPath() + "/manage_dashboard.jsp");
+                    response.sendRedirect(request.getContextPath() + "/manage_dashboard");
                     return;
                 case "staff":
-                    response.sendRedirect(request.getContextPath() + "/staff_dashboard.jsp"); // 🟢 Đã sửa đường dẫn
+                    response.sendRedirect(request.getContextPath() + "/staff_dashboard"); // 🟢 Đã sửa đường dẫn
                     return;
                 default:
                     session.invalidate();
@@ -62,13 +62,13 @@ public class LoginServlet extends HttpServlet {
 
             switch (user.getRole().getRname().toLowerCase()) {
                 case "boss":
-                    response.sendRedirect(request.getContextPath() + "/boss_dashboard.jsp");
+                    response.sendRedirect(request.getContextPath() + "/boss_dashboard");
                     return;
                 case "manage":
-                    response.sendRedirect(request.getContextPath() + "/manage_dashboard.jsp");
+                    response.sendRedirect(request.getContextPath() + "/manage_dashboard");
                     return;
                 case "staff":
-                    response.sendRedirect(request.getContextPath() + "/staff_dashboard.jsp");
+                    response.sendRedirect(request.getContextPath() + "/staff_dashboard");
                     return;
                 default:
                     session.invalidate();
