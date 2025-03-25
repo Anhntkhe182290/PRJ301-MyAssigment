@@ -86,7 +86,7 @@ public class StaffDashboardServlet extends HttpServlet {
         }
 
         request.setAttribute("user", user);
-        request.setAttribute("requests", requests); // ⚠️ Đừng quên dòng này
+        request.setAttribute("requests", requests);
         request.getRequestDispatcher("/staff_dashboard.jsp").forward(request, response);
     }
 }

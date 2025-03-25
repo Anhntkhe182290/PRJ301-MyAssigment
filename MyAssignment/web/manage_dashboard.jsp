@@ -3,7 +3,6 @@
 <%@page import="data.AbsentRequest"%>
 <%@page import="java.util.List"%>
 <%@page import="java.time.LocalDate"%>
-<%@page import="java.util.HashSet"%>
 
 <%
     User user = (User) session.getAttribute("user");
@@ -17,22 +16,17 @@
     <head>
         <meta charset="UTF-8">
         <title>Manage Dashboard</title>
-        <link rel="stylesheet" href="plugins/bootstrap/css/bootstrap.min.css"/>
-
+        <link rel="stylesheet" href="plugins/bootstrap/css/bootstrap.min.css">
     </head>
     <body>
         <div class="container">
             <h3>Xin chào, <%= user.getFullName() %> (Manage - <%= user.getDepartment().getDepName() %>)</h3>
 
             <% if (request.getAttribute("successMessage") != null) { %>
-            <div class="alert alert-success">
-                <%= request.getAttribute("successMessage") %>
-            </div>
+            <div class="alert alert-success"><%= request.getAttribute("successMessage") %></div>
             <% } %>
             <% if (request.getAttribute("errorMessage") != null) { %>
-            <div class="alert alert-danger">
-                <%= request.getAttribute("errorMessage") %>
-            </div>
+            <div class="alert alert-danger"><%= request.getAttribute("errorMessage") %></div>
             <% } %>
 
             <form class="form-inline" method="get" action="manage_dashboard">
@@ -48,7 +42,7 @@
                     <input type="date" name="date" class="form-control" value="<%= filterDate != null ? filterDate : "" %>"/>
                 </div>
                 <button type="submit" class="btn btn-primary">Lọc</button>
-                <a href="manager_profile" class="btn btn-default pull-right">My Profile</a>
+                <a href="manage_profile" class="btn btn-default pull-right">My Profile</a>
             </form>
 
             <br/>
@@ -125,9 +119,11 @@
             </table>
         </div>
 
+        <!-- Include Modal Agenda -->
         <jsp:include page="modal_agenda.jsp" />
 
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- jQuery CDN -->
-        <script src="plugins/bootstrap/js/bootstrap.min.js"></script>      <!-- Bootstrap JS -->
+        <!-- Scripts -->
+        <script src="plugins/bootstrap/js/jquery.min.js"></script>
+        <script src="plugins/bootstrap/js/bootstrap.min.js"></script>
     </body>
 </html>
