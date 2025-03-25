@@ -3,6 +3,7 @@ package dal;
 import data.AbsentRequest;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -185,4 +186,106 @@ public class AbsentRequestDBContext extends DBContext<AbsentRequest> {
             ex.printStackTrace();
         }
     }
+
+    // Lấy tất cả đơn xin nghỉ theo phòng ban
+    public List<AbsentRequest> getRequestsByDepartment(int depId) {
+        List<AbsentRequest> list = new ArrayList<>();
+        String sql = "SELECT * FROM AbsentRequest WHERE createBy IN "
+                + "(SELECT username FROM [User] WHERE depid = ?) ORDER BY createAt DESC";
+
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, depId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                list.add(mapResultToAbsentRequest(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    // Lọc theo trạng thái + ngày
+    public List<AbsentRequest> filterRequestsByStatusAndDate(int depId, Integer status, String date) {
+        List<AbsentRequest> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("SELECT * FROM AbsentRequest WHERE createBy IN (SELECT username FROM [User] WHERE depid = ?)");
+        if (status != null) {
+            sql.append(" AND status = ?");
+        }
+        if (date != null && !date.isEmpty()) {
+            sql.append(" AND CAST(createAt AS DATE) = ?");
+        }
+
+        try (PreparedStatement stmt = connection.prepareStatement(sql.toString())) {
+            int idx = 1;
+            stmt.setInt(idx++, depId);
+            if (status != null) {
+                stmt.setInt(idx++, status);
+            }
+            if (date != null && !date.isEmpty()) {
+                stmt.setString(idx, date);
+            }
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                list.add(mapResultToAbsentRequest(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    private AbsentRequest mapResultToAbsentRequest(ResultSet rs) throws SQLException {
+        return new AbsentRequest(
+                rs.getString("abid"),
+                rs.getString("title"),
+                rs.getString("reason"),
+                rs.getString("from"),
+                rs.getString("to"),
+                rs.getInt("status"),
+                rs.getString("createBy"),
+                rs.getString("createAt")
+        );
+    }
+    
+    //Hàm lọc
+    public List<AbsentRequest> getRequestsByDepartmentWithFilter(int depId, String status, String date) {
+        List<AbsentRequest> requests = new ArrayList<>();
+        String sql = "SELECT ar.* FROM AbsentRequest ar "
+                + "JOIN [User] u ON ar.createBy = u.username "
+                + "WHERE u.depid = ? ";
+
+        if (status != null && !status.isEmpty()) {
+            sql += "AND ar.status = ? ";
+        }
+        if (date != null && !date.isEmpty()) {
+            sql += "AND ar.createAt = ? ";
+        }
+
+        try {
+            PreparedStatement stmt = connection.prepareStatement(sql);
+            stmt.setInt(1, depId);
+
+            int paramIndex = 2;
+            if (status != null && !status.isEmpty()) {
+                stmt.setInt(paramIndex++, Integer.parseInt(status));
+            }
+            if (date != null && !date.isEmpty()) {
+                stmt.setDate(paramIndex++, Date.valueOf(date));
+            }
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                requests.add(mapResultToAbsentRequest(rs));
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+
+        return requests;
+    }
+
 }
