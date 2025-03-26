@@ -45,25 +45,27 @@ public class ManageProfileServlet extends HttpServlet {
             return;
         }
 
-        String newPassword = request.getParameter("newPassword");
-        String confirmPassword = request.getParameter("confirmPassword");
-        String title = request.getParameter("title");
-        String fromDate = request.getParameter("fromDate");
-        String toDate = request.getParameter("toDate");
-        String reason = request.getParameter("reason");
+        String action = request.getParameter("action");
 
-        if (newPassword != null && confirmPassword != null) {
-            // Xử lý đổi mật khẩu
-            if (newPassword != null && confirmPassword != null) {
-                if (!newPassword.equals(confirmPassword)) {
-                    request.setAttribute("errorMessage", "Mật khẩu xác nhận không khớp.");
-                } else {
-                    UserDBContext userDB = new UserDBContext();
-                    userDB.updatePassword(user.getUsername(), newPassword);
-                    request.setAttribute("successMessage", "Cập nhật mật khẩu thành công!");
-                }
-            } else if (title != null && fromDate != null && toDate != null && reason != null) {
-                // Xử lý gửi đơn xin nghỉ phép
+        if ("changePassword".equals(action)) {
+            String newPassword = request.getParameter("newPassword");
+            String confirmPassword = request.getParameter("confirmPassword");
+
+            if (!newPassword.equals(confirmPassword)) {
+                request.setAttribute("errorMessage", "Mật khẩu xác nhận không khớp.");
+            } else {
+                UserDBContext userDB = new UserDBContext();
+                userDB.updatePassword(user.getUsername(), newPassword);
+                request.setAttribute("successMessage", "Cập nhật mật khẩu thành công!");
+            }
+
+        } else if ("request".equals(action)) {
+            String title = request.getParameter("title");
+            String fromDate = request.getParameter("fromDate");
+            String toDate = request.getParameter("toDate");
+            String reason = request.getParameter("reason");
+
+            if (title != null && fromDate != null && toDate != null && reason != null) {
                 String abid = UUID.randomUUID().toString().substring(0, 8);
                 String createdAt = java.time.LocalDate.now().toString();
                 int status = 1; // In process
@@ -82,15 +84,27 @@ public class ManageProfileServlet extends HttpServlet {
                 AbsentRequestDBContext db = new AbsentRequestDBContext();
                 db.insert(requestModel);
                 request.setAttribute("successMessage", "Đã gửi đơn xin nghỉ thành công.");
+            } else {
+                request.setAttribute("errorMessage", "Vui lòng điền đầy đủ thông tin đơn nghỉ.");
             }
 
-            // Load lại danh sách đơn để hiển thị trong manage_profile.jsp
-            AbsentRequestDBContext absentDB = new AbsentRequestDBContext();
-            List<AbsentRequest> requests = absentDB.getAbsentRequestsByUser(user.getUsername());
-            request.setAttribute("user", user);
-            request.setAttribute("requests", requests);
-
-            request.getRequestDispatcher("/manage_profile.jsp").forward(request, response);
+        } else if ("delete".equals(action)) {
+            String abid = request.getParameter("abid");
+            if (abid != null && !abid.isEmpty()) {
+                AbsentRequestDBContext db = new AbsentRequestDBContext();
+                db.deleteById(abid);
+                request.setAttribute("successMessage", "Đã xoá đơn nghỉ thành công.");
+            }
         }
+
+        // Load lại danh sách
+        AbsentRequestDBContext absentDB = new AbsentRequestDBContext();
+        List<AbsentRequest> requests = absentDB.getAbsentRequestsByUser(user.getUsername());
+
+        request.setAttribute("user", user);
+        request.setAttribute("requests", requests);
+
+        request.getRequestDispatcher("/manage_profile.jsp").forward(request, response);
     }
+
 }

@@ -250,7 +250,7 @@ public class AbsentRequestDBContext extends DBContext<AbsentRequest> {
                 rs.getString("createAt")
         );
     }
-    
+
     //Hàm lọc
     public List<AbsentRequest> getRequestsByDepartmentWithFilter(int depId, String status, String date) {
         List<AbsentRequest> requests = new ArrayList<>();
@@ -286,6 +286,55 @@ public class AbsentRequestDBContext extends DBContext<AbsentRequest> {
         }
 
         return requests;
+    }
+
+    public List<AbsentRequest> getApprovedRequestsInRange(String fromDate, String toDate) {
+        List<AbsentRequest> list = new ArrayList<>();
+        String sql = "SELECT * FROM AbsentRequest WHERE status = 2 AND [from] <= ? AND [to] >= ?";
+
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, toDate);
+            stmt.setString(2, fromDate);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                list.add(mapResultToAbsentRequest(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    public List<AbsentRequest> getAllRequestsWithFilter(String status, String date) {
+        List<AbsentRequest> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("SELECT * FROM AbsentRequest WHERE 1=1");
+
+        if (status != null && !status.isEmpty()) {
+            sql.append(" AND status = ?");
+        }
+        if (date != null && !date.isEmpty()) {
+            sql.append(" AND createAt = ?");
+        }
+
+        try (PreparedStatement stmt = connection.prepareStatement(sql.toString())) {
+            int index = 1;
+            if (status != null && !status.isEmpty()) {
+                stmt.setInt(index++, Integer.parseInt(status));
+            }
+            if (date != null && !date.isEmpty()) {
+                stmt.setDate(index, Date.valueOf(date));
+            }
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                list.add(mapResultToAbsentRequest(rs));
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+
+        return list;
     }
 
 }

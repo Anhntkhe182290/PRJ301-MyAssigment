@@ -5,7 +5,12 @@
 
 <%
     User user = (User) session.getAttribute("user");
-    List<AbsentRequest> requests = (List<AbsentRequest>) request.getAttribute("requests");
+    if (user == null || !user.getRole().getRname().equalsIgnoreCase("manage")) {
+        response.sendRedirect("login.jsp");
+        return;
+    }
+    List<AbsentRequest> requests = (List<AbsentRequest>) 
+            request.getAttribute("requests");
 %>
 
 <!DOCTYPE html>
