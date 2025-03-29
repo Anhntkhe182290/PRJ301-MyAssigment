@@ -191,6 +191,12 @@
             </div>
         </div>
 
+        <div style="text-align: right; margin-bottom: 10px;">
+            <form action="logout" method="post" style="display:inline;">
+                <button class="btn btn-danger">Đăng xuất</button>
+            </form>
+        </div>
+
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script src="plugins/bootstrap/js/bootstrap.min.js"></script>
     </body>

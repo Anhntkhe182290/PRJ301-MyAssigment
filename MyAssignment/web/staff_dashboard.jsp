@@ -191,7 +191,11 @@
             </table>
         </div>
 
+        <div style="text-align: right; margin-bottom: 10px;">
+            <form action="logout" method="post" style="display:inline;">
+                <button class="btn btn-danger">Đăng xuất</button>
+            </form>
+        </div>
 
-        <a href="logout">Logout</a>
     </body>
 </html>
